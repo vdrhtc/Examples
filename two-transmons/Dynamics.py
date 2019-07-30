@@ -48,7 +48,7 @@ class Dynamics:
         time_of_propagation = 1/self.freq
 
         U = propagator(self.Hp, time_of_propagation, c_op_list = self.dts.c_ops(self.phi1, self.phi2),
-                       args = {'wd':self.freq*2*pi}, options=self.options, unitary_mode='single', 
+                       args = {'wd1':self.freq*2*pi, 'wd2':self.freq*2*pi}, options=self.options, unitary_mode='single', 
                        parallel=False, progress_bar= None)#, num_cpus=1)
     
         return propagator_steadystate(U)
@@ -61,7 +61,7 @@ class Dynamics:
         self.phi2 = self.fl_vec2[j]
         
         self.Hp = [self.dts.H(self.phi1, self.phi2)] + self.dts.Hdr([self.amp, self.amp],
-                                                         [self.dur, self.dur], [0, 0], [self.phi1, self.phi2], [0, 0]) 
+                                                         [self.dur, self.dur], [0, 0], [self.phi1, self.phi2]) 
         
         for i in self.f_list: #range (0, self.Lf, self.Lf//self.res_f): 
             self.freq = self.Y[i]
