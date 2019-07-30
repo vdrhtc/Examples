@@ -14,11 +14,12 @@ warnings.simplefilter(action='ignore', category=FutureWarning)
 import matplotlib.pyplot as plt
 from multiprocessing import Pool
 import glob, os
+import pickle
 
 class Dynamics:
     
     
-    def __init__(self, dts, s1, s2, period1, period2, amp, dur):
+    def __init__(self, dts, s1, s2, period1, period2, amp1, amp2, dur1, dur2):
         
         self.dts = dts
         self.s1 = s1
@@ -39,8 +40,10 @@ class Dynamics:
        
        
         self.spec = None
-        self.amp = amp
-        self.dur = dur
+        self.amp1 = amp1
+        self.amp2 = amp2
+        self.dur1 = dur1
+        self.dur2 = dur2
        
 
     def _steady(self):
@@ -60,8 +63,8 @@ class Dynamics:
         self.phi1 = self.fl_vec1[j]
         self.phi2 = self.fl_vec2[j]
         
-        self.Hp = [self.dts.H(self.phi1, self.phi2)] + self.dts.Hdr([self.amp, self.amp],
-                                                         [self.dur, self.dur], [0, 0], [self.phi1, self.phi2]) 
+        self.Hp = [self.dts.H(self.phi1, self.phi2)] + self.dts.Hdr([self.amp1, self.amp2],
+                                                         [self.dur1, self.dur2], [0, 0], [self.phi1, self.phi2]) 
         
         for i in self.f_list: #range (0, self.Lf, self.Lf//self.res_f): 
             self.freq = self.Y[i]
@@ -96,7 +99,14 @@ class Dynamics:
             
         for f in glob.glob("*.pyx"):
             os.remove(f)
-        
+        #pickling the results
+        pickle_data = {'data':self.spec, 'dts':self.dts,'amps':[self.amp1, self.amp2],'durs':[self.dur1, self.dur2], 'class':self}
+        pickle_out = open("double_tone.pickle","wb")
+        pickle.dump(pickle_data, pickle_out)
+        pickle_out.close()
+        #pickle_in = open("double_tone.pickle","rb")
+        #example_dict2 = pickle.load(pickle_in)
+        #pickle_in.close()
         return self.spec
     
     def plot(self, n_state):
