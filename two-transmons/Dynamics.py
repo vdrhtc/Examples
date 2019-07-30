@@ -12,7 +12,8 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import matplotlib.pyplot as plt
-
+from multiprocessing import Pool
+import glob, os
 
 class Dynamics:
     
@@ -78,6 +79,24 @@ class Dynamics:
         #self.ph_list = list(range(0, self.Lph, (self.Lph)//(self.res_ph-1)))
         #self.f_list = list(range (0, self.Lf, (self.Lf)//(self.res_f-1)))
         self.spec = parfor(self._phase_calc, self.ph_list, num_cpus = 8) 
+        return self.spec
+    
+    def run_pb(self, res_f, res_ph, n_cpus):
+        
+        
+        self.res_f = res_f
+        self.res_ph = res_ph
+        self.ph_list = np.array(np.linspace(0., self.Lph-1, res_ph), dtype = int)
+        self.f_list = np.array(np.linspace(0., self.Lf-1, res_f), dtype = int)
+        self.spec = []
+        with Pool(n_cpus) as p:
+        #self.ph_list = list(range(0, self.Lph, (self.Lph)//(self.res_ph-1)))
+        #self.f_list = list(range (0, self.Lf, (self.Lf)//(self.res_f-1)))
+            self.spec = list(tqdm_notebook(p.imap(self._phase_calc, self.ph_list), total = len(self.ph_list), smoothing=0))
+            
+        for f in glob.glob("*.pyx"):
+            os.remove(f)
+        
         return self.spec
     
     def plot(self, n_state):
