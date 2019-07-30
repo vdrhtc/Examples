@@ -1,6 +1,6 @@
 import numpy as np
-from numpy import *
 from qutip import *
+from numpy  import *
 
 class Transmon:
     
@@ -60,6 +60,7 @@ class Transmon:
         evals = self.H_diag_trunc_approx(phi).eigenenergies()
         return (evals[1]-evals[0])/2/pi
     
+    ##transforming bare transmon Hamiltonian into Charge Basis
     def n(self, phi):
         H_charge_basis = self.Hc()+self.Hj(phi)
         evals, evecs = H_charge_basis.eigenstates()
@@ -88,12 +89,14 @@ class Transmon:
     def get_Ns(self):
         return self._N_trunc
     
+    ##driving!! utilized in double-tone spectroscopy
     def Hdr(self, amplitude, duration, start, phase = 0, freq = None):
         if freq is None:
             freq = self.ge_freq_approx(1/2)
         return [self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
-                "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
-                (amplitude, freq, phase, start, start+duration)]
+                "%f*cos(wd*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
+                #(amplitude, freq, phase, start, start+duration)]
+                (amplitude, phase, start, start+duration)]
 
     def sz(self):
         return ket2dm(basis(3, 0))-ket2dm(basis(3,1))
