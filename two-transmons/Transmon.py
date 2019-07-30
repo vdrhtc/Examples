@@ -72,8 +72,8 @@ class Transmon:
 #                     self.n().matrix_element(evecs[0], evecs[1]) *
 #                     evecs[j]*evecs[j+1].dag() for j in range(0, self._Ns-1)])
         evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
-        return sum([self.n(phi).matrix_element(evecs[j], evecs[j+1]) /
-                    self.n(phi).matrix_element(evecs[0], evecs[1]) *
+        return sum([abs(self.n(phi).matrix_element(evecs[j], evecs[j+1])) /
+                    abs(self.n(phi).matrix_element(evecs[0], evecs[1])) *
                     evecs[j]*evecs[j+1].dag() for j in range(0, self._N_trunc-1)]) 
     
     def rotating_dephasing(self, phi):
@@ -89,10 +89,19 @@ class Transmon:
     def get_Ns(self):
         return self._N_trunc
     
-    ##driving!! utilized in double-tone spectroscopy
-    def Hdr(self, amplitude, duration, start, phase = 0, freq = None):
-        if freq is None:
-            freq = self.ge_freq_approx(1/2)
+    
+    
+#     def Hdr(self, amplitude, duration, start, phase = 0, freq = None):
+#         if freq is None:
+#             freq = self.ge_freq_approx(1/2)
+#         return [self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
+#                 "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
+#                 (amplitude, freq, phase, start, start+duration)]
+    
+    
+    #driving!! utilized in double-tone spectroscopy
+    def Hdr(self, amplitude, duration, start, phase = 0):
+        
         return [self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
                 "%f*cos(wd*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
                 #(amplitude, freq, phase, start, start+duration)]
