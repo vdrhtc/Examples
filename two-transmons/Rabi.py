@@ -13,6 +13,8 @@ class Rabi:
         self._qubit_to_drive = qubit_to_drive
         self._r = readout_resonator
         
+ 
+        
         self._rho0 = self._dts.gg_state(1/2, 1/2)
         self._rho0 = self._rho0*self._rho0.dag()
         
@@ -20,6 +22,7 @@ class Rabi:
         waveform1 = ones_like(self._Ts)*1/2
         waveform2 = ones_like(self._Ts)*1/2
         return waveform1, waveform2
+  
         
     def run(self):
         options = Options(nsteps=20000, store_states=True)
@@ -38,15 +41,16 @@ class Rabi:
         self._H += self._dts.Hdr(amplitudes, 
                            (self._duration, self._duration), 
                            (0, 0),
-                           (0, 0),
-                           self._freqs)
+                           (0, 0))
 
         self._result = mesolve(self._H, 
                                self._rho0, 
                                self._Ts, 
                                c_ops = self._c_ops, 
                                progress_bar=True, 
-                               options=options,
+                               options=options, 
+                               args = {'wd%d'%self._dts.get_single_transmons()[0].get_index(): self._freqs[0]*2*pi,
+                                       'wd%d'%self._dts.get_single_transmons()[1].get_index(): self._freqs[1]*2*pi},
                                e_ops = [tensor(ket2dm(basis(3, 1)), identity(3)), 
                                         tensor(identity(3), ket2dm(basis(3, 1)))])
         return self._result

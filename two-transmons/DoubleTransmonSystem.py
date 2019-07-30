@@ -24,8 +24,8 @@ class DoubleTransmonSystem:
         
     def H(self, phi1, phi2):
 #         return self.Hc()+self.Hj(phi1, phi2)+self.Hint(phi1, phi2)
-        return self._two_qubit_operator(qubit1_operator = self._tr1.H_diag_trunc_approx(phi1)) + \
-               self._two_qubit_operator(qubit2_operator = self._tr2.H_diag_trunc_approx(phi2)) + \
+        return self._two_qubit_operator(qubit1_operator = self._tr1.H_diag_trunc(phi1)) + \
+               self._two_qubit_operator(qubit2_operator = self._tr2.H_diag_trunc(phi2)) + \
                self.Hint(1/2, 1/2)
     
     def H_td(self, waveform1, waveform2):
@@ -61,14 +61,24 @@ class DoubleTransmonSystem:
     def Hint(self, phi1, phi2):
         return self._two_qubit_operator(self._tr1.n(phi1), self._tr2.n(phi2))*self._g
     
-    def Hdr(self, amplitudes, durations, starts, phases, freqs = (None, None)):
-        Hdr1 = self._tr1.Hdr(amplitudes[0], durations[0], starts[0], phases[0], freqs[0])
+    
+    def Hdr(self, amplitudes, durations, starts, phases):
+        Hdr1 = self._tr1.Hdr(amplitudes[0], durations[0], starts[0], phases[0])
         Hdr1[0] = self._two_qubit_operator(qubit1_operator=Hdr1[0])
 
-        Hdr2 = self._tr2.Hdr(amplitudes[1], durations[1], starts[1], phases[1], freqs[1])
+        Hdr2 = self._tr2.Hdr(amplitudes[1], durations[1], starts[1], phases[1])
         Hdr2[0] = self._two_qubit_operator(qubit2_operator=Hdr2[0])
         
         return [Hdr1] + [Hdr2]
+    
+#     def Hdr(self, amplitudes, durations, starts, phases):
+#         Hdr1 = self._tr1.Hdr(amplitudes[0], durations[0], starts[0], phases[0])
+#         Hdr1[0] = self._two_qubit_operator(qubit1_operator=Hdr1[0])
+
+#         Hdr2 = self._tr2.Hdr(amplitudes[1], durations[1], starts[1], phases[1])
+#         Hdr2[0] = self._two_qubit_operator(qubit2_operator=Hdr2[0])
+        
+#         return [Hdr1] + [Hdr2]
     
     def _remove_global_phase(self, state):
         state_full = state.full()
@@ -111,7 +121,7 @@ class DoubleTransmonSystem:
             c_ops.append(self._two_qubit_operator(qubit2_operator = c_op))
         return c_ops
     
-    def plot_spectrum(self, phi1s, phi2s):
+    def plot_spectrum(self, phi1s, phi2s, currents = None):
         assert len(phi1s) == len(phi2s)
         
         fluxes = list(zip(phi1s, phi2s))
@@ -126,8 +136,13 @@ class DoubleTransmonSystem:
         eigenlevels = fixed_flux_spectra.T
         transitions_from_g = eigenlevels - eigenlevels[0]
         
-        plot(phi1s, transitions_from_g[1:3].T/2/pi)
-        plot(phi1s, transitions_from_g[3:6].T/2/pi/2)
+        if currents is not None:
+            plot(currents, transitions_from_g[1:3].T/2/pi)
+            plot(currents, transitions_from_g[3:6].T/2/pi/2)
+        else:
+            plot(phi1s, transitions_from_g[1:3].T/2/pi)
+            plot(phi1s, transitions_from_g[3:6].T/2/pi/2)
+            
         grid()
     
     
