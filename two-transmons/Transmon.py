@@ -4,7 +4,7 @@ from numpy  import *
 
 class Transmon:
     
-    def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi, Nc):
+    def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi, Nc, index):
         self._Ec = Ec
         self._Ej = Ej
         self._d = d
@@ -12,6 +12,7 @@ class Transmon:
         self._Ns = Nc*2+1
         self._gamma_rel = gamma_rel
         self._gamma_phi = gamma_phi
+        self.index = index
         
         self._N_trunc = 3
     
@@ -89,6 +90,10 @@ class Transmon:
     def get_Ns(self):
         return self._N_trunc
     
+    def get_index(self):
+        return self.index
+   
+    
     
     
 #     def Hdr(self, amplitude, duration, start, phase = 0, freq = None):
@@ -103,9 +108,9 @@ class Transmon:
     def Hdr(self, amplitude, duration, start, phase = 0):
         
         return [self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
-                "%f*cos(wd*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
+                "%f*cos(wd%d*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
                 #(amplitude, freq, phase, start, start+duration)]
-                (amplitude, phase, start, start+duration)]
+                (amplitude, self.index, phase, start, start+duration)]
 
     def sz(self):
         return ket2dm(basis(3, 0))-ket2dm(basis(3,1))
