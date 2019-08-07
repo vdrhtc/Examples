@@ -85,7 +85,7 @@ class Dynamics1:
         self.spec = parfor(self._phase_calc, self.ph_list, num_cpus = 8) 
         return self.spec
     
-    def run_pb(self, curr1, curr2, freq1, freq2, res_f, res_ph n_cpus):
+    def run_pb(self, curr1, curr2, freq1, freq2, res_f, res_ph, n_cpus):
         self.X = linspace(curr1, curr2, res_ph)  #was (2, 6, 301)
         self.Y = linspace(freq1, freq2, res_f) #was (5.1, 5.5, 401)
         
