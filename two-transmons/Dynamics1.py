@@ -19,7 +19,7 @@ import pickle
 class Dynamics1:
     
     
-    def __init__(self, dts, s1, s2, period1, period2, amp1, amp2, dur1, dur2):
+    def __init__(self, dts, s1, s2, period1, period2, dur1, dur2):
         
         self.dts = dts
         self.s1 = s1
@@ -34,8 +34,7 @@ class Dynamics1:
         self.Y = linspace(0,2,2)    
        
         self.spec = None
-        self.amp1 = amp1
-        self.amp2 = amp2
+
         self.dur1 = dur1
         self.dur2 = dur2
        
@@ -85,9 +84,12 @@ class Dynamics1:
         self.spec = parfor(self._phase_calc, self.ph_list, num_cpus = 8) 
         return self.spec
     
-    def run_pb(self, curr1, curr2, freq1, freq2, res_f, res_ph, n_cpus):
+    def run_pb(self, curr1, curr2, freq1, freq2, res_f, res_ph,amp, n_cpus):
         self.X = linspace(curr1, curr2, res_ph)  #was (2, 6, 301)
         self.Y = linspace(freq1, freq2, res_f) #was (5.1, 5.5, 401)
+        
+        self.amp1 = amp
+        self.amp2 = amp
         
         self.fl_vec1 = (self.X - self.s1)/self.period1 + 1/2 #in terms of pi
         self.fl_vec2 = (self.X - self.s2)/self.period2
