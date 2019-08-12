@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 from multiprocessing import Pool
 import glob, os
 import pickle
+import datetime
 
 class Dynamics1:
     
@@ -46,7 +47,7 @@ class Dynamics1:
 
         U = propagator(self.Hp, time_of_propagation, c_op_list = self.dts.c_ops(self.phi1, self.phi2),
                        args = {'wd1':self.freq*2*pi, 'wd2':self.freq*2*pi}, options=self.options, unitary_mode='single', 
-                       parallel=False, progress_bar= None)#, num_cpus=1)
+                       paHp[0].eigenenergies()rallel=False, progress_bar= None)#, num_cpus=1)
     
         return propagator_steadystate(U)
   
@@ -108,8 +109,11 @@ class Dynamics1:
         for f in glob.glob("*.pyx"):
             os.remove(f)
         #pickling the results
+        now = datetime.datetime.now()
+        dat_str = now.strftime("%d_%b_%H:%M")
         pickle_data = {'data':self.spec, 'dts':self.dts,'amps':[self.amp1, self.amp2],'durs':[self.dur1, self.dur2], 'class':self}
-        pickle_out = open("double_tone.pickle","wb")
+        
+        pickle_out = open(("./tin/"+dat_str+".pickle"),"wb")
         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
         #pickle_in = open("double_tone.pickle","rb")
