@@ -65,7 +65,7 @@ class Transmon:
     def n(self, phi):
         H_charge_basis = self.Hc()+self.Hj(phi)
         evals, evecs = H_charge_basis.eigenstates()
-        return self._truncate(charge(self._Nc).transform(evecs))
+        return self._truncate(Qobj(abs(charge(self._Nc).transform(evecs))))
     
     def lowering(self, phi):
 #         evals, evecs = self.H(phi).eigenstates()
