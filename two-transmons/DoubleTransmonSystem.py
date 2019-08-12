@@ -26,7 +26,7 @@ class DoubleTransmonSystem:
 #         return self.Hc()+self.Hj(phi1, phi2)+self.Hint(phi1, phi2)
         return self._two_qubit_operator(qubit1_operator = self._tr1.H_diag_trunc(phi1)) + \
                self._two_qubit_operator(qubit2_operator = self._tr2.H_diag_trunc(phi2)) + \
-               self.Hint(1/2, 1/2)
+               self.Hint(phi1, phi2)#тут ашыпка - нада писацъ 1\2 1\2
     
     def H_td(self, waveform1, waveform2):
         return [self.Hc()]+self.Hj_td(waveform1, waveform2)+[self.Hint()]
