@@ -46,7 +46,7 @@ class Dynamics1:
 
         U = propagator(self.Hp, time_of_propagation, c_op_list = self.dts.c_ops(self.phi1, self.phi2),
                        args = {'wd1':self.freq*2*pi, 'wd2':self.freq*2*pi}, options=self.options, unitary_mode='single', 
-                       paHp[0].eigenenergies()rallel=False, progress_bar= None)#, num_cpus=1)
+                       parallel=False, progress_bar= None)#, num_cpus=1)
     
         return propagator_steadystate(U)
   
