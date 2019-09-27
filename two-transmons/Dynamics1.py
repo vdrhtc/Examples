@@ -46,7 +46,7 @@ class Dynamics1:
 
         U = propagator(self.Hp, time_of_propagation, c_op_list = self.dts.c_ops(self.phi1, self.phi2),
                        args = {'wd1':self.freq*2*pi, 'wd2':self.freq*2*pi}, options=self.options, unitary_mode='single', 
-                       parallel=False, progress_bar= None)#, num_cpus=1)
+                       parallel=False)#, num_cpus=1)
     
         return propagator_steadystate(U)
   
@@ -55,6 +55,7 @@ class Dynamics1:
         
         phase_column = []  
         self.phi1 = self.fl_vec1[j]
+        #self.phi1 = (self.flux_res - self.s1)/self.period1 + 1/2
         self.phi2 = self.fl_vec2[j]
         
         self.Hp = [self.dts.H(self.phi1, self.phi2)] + self.dts.Hdr([self.amp1, self.amp2],
@@ -70,7 +71,7 @@ class Dynamics1:
         self.X = linspace(curr1, curr2, res_ph)  #was (2, 6, 301)
         self.Y = linspace(freq1, freq2, res_f) #was (5.1, 5.5, 401)
         
-        self.fl_vec1 = (self.X - self.s1)/self.period1 + 1/2 #in terms of pi
+        (self.X - self.s1)/self.period1 + 1/2 #in terms of pi
         self.fl_vec2 = (self.X - self.s2)/self.period2
         
         self.Lph = len(self.fl_vec1)
@@ -78,19 +79,23 @@ class Dynamics1:
         self.res_f = res_f
         self.res_ph = res_ph
         self.ph_list = np.array(np.linspace(0., self.Lph-1, res_ph), dtype = int)
-        self.f_list = np.array(np.linspace(0., self.Lf-1, res_f), dtype = int)
+        self.f_list = np.array(np.inspace(0., self.Lf-1, res_f), dtype = int)
         
         #self.ph_list = list(range(0, self.Lph, (self.Lph)//(self.res_ph-1)))
         #self.f_list = list(range (0, self.Lf, (self.Lf)//(self.res_f-1)))
         self.spec = parfor(self._phase_calc, self.ph_list, num_cpus = 8) 
         return self.spec
     
-    def run_pb(self, curr1, curr2, freq1, freq2, res_f, res_ph,amp, n_cpus):
+    def run_pb(self, curr1, curr2, freq1, freq2, res_f, res_ph, amp1, amp2, n_cpus):
+        
+        #self.freq_res = freq_res
+        #self.flux_res = flux_res
+        
         self.X = linspace(curr1, curr2, res_ph)  #was (2, 6, 301)
         self.Y = linspace(freq1, freq2, res_f) #was (5.1, 5.5, 401)
-        
-        self.amp1 = amp
-        self.amp2 = amp
+        #amp1 = amp2 = amp 
+        self.amp1 = amp1
+        self.amp2 = amp2
         
         self.fl_vec1 = (self.X - self.s1)/self.period1 + 1/2 #in terms of pi
         self.fl_vec2 = (self.X - self.s2)/self.period2
@@ -111,16 +116,17 @@ class Dynamics1:
         for f in glob.glob("*.pyx"):
             os.remove(f)
         #pickling the results
-        now = datetime.datetime.now()
-        dat_str = now.strftime("%d_%b_%H:%M")
-        pickle_data = {'data':self.spec, 'dts':self.dts,'amps':[self.amp1, self.amp2],'durs':[self.dur1, self.dur2], 'class':self}
+        #now = datetime.datetime.now()
+        #dat_str = now.strftime("%d_%b_%H:%M")
+        #pickle_data = {'data':self.spec, 'dts':self.dts,'amps':[self.amp1, self.amp2],'durs':[self.dur1, self.dur2], 'class':self}
         
-        pickle_out = open(("./tin/"+dat_str+".pickle"),"wb")
+        #pickle_out = open(("./tin/"+dat_str+".pickle"),"wb")
+        #pickle.dump(pickle_data, pickle_out)
+        #pickle_out.close()
+        pickle_data = {'data':self.spec, 'dts':self.dts,'amps':[self.amp1, self.amp2],'durs':[self.dur1, self.dur2], 'class':self}
+        pickle_out = open("double_tone.pickle","wb")
         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
-        #pickle_in = open("double_tone.pickle","rb")
-        #example_dict2 = pickle.load(pickle_in)
-        #pickle_in.close()
         return self.spec
     
     def plot(self, n_state):
@@ -151,10 +157,10 @@ class Dynamics1:
 
             plt.pcolormesh(x, y, ans.real)
             plt.colorbar(use_gridspec = True).set_label('real part', rotation=270)
-            plt.title('Double-tone spectroscopy')
+            plt.title('Two-tone spectroscopy')
             plt.ylabel('Frequency [GHz]')
             plt.xlabel('Current [e-4 A]');
-            plt.grid()
+            #plt.grid()
             
         except: 
             
