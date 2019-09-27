@@ -1,9 +1,10 @@
 import numpy as np
 from qutip import *
+from numpy  import *
 
 class Transmon:
     
-    def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi, Nc):
+    def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi, Nc, index):
         self._Ec = Ec
         self._Ej = Ej
         self._d = d
@@ -11,6 +12,7 @@ class Transmon:
         self._Ns = Nc*2+1
         self._gamma_rel = gamma_rel
         self._gamma_phi = gamma_phi
+        self.index = index
         
         self._N_trunc = 3
     
@@ -59,10 +61,11 @@ class Transmon:
         evals = self.H_diag_trunc_approx(phi).eigenenergies()
         return (evals[1]-evals[0])/2/pi
     
+    ##transforming bare transmon Hamiltonian into Charge Basis
     def n(self, phi):
         H_charge_basis = self.Hc()+self.Hj(phi)
         evals, evecs = H_charge_basis.eigenstates()
-        return self._truncate(charge(self._Nc).transform(evecs))
+        return self._truncate(Qobj(abs(charge(self._Nc).transform(evecs))))
     
     def lowering(self, phi):
 #         evals, evecs = self.H(phi).eigenstates()
@@ -70,8 +73,8 @@ class Transmon:
 #                     self.n().matrix_element(evecs[0], evecs[1]) *
 #                     evecs[j]*evecs[j+1].dag() for j in range(0, self._Ns-1)])
         evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
-        return sum([self.n(phi).matrix_element(evecs[j], evecs[j+1]) /
-                    self.n(phi).matrix_element(evecs[0], evecs[1]) *
+        return sum([abs(self.n(phi).matrix_element(evecs[j], evecs[j+1])) /
+                    abs(self.n(phi).matrix_element(evecs[0], evecs[1])) *
                     evecs[j]*evecs[j+1].dag() for j in range(0, self._N_trunc-1)]) 
     
     def rotating_dephasing(self, phi):
@@ -87,12 +90,27 @@ class Transmon:
     def get_Ns(self):
         return self._N_trunc
     
-    def Hdr(self, amplitude, duration, start, phase = 0, freq = None):
-        if freq is None:
-            freq = self.ge_freq_approx(1/2)
-        return [self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
-                "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
-                (amplitude, freq, phase, start, start+duration)]
+    def get_index(self):
+        return self.index
+   
+    
+    
+    
+#     def Hdr(self, amplitude, duration, start, phase = 0, freq = None):
+#         if freq is None:
+#             freq = self.ge_freq_approx(1/2)
+#         return [self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
+#                 "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
+#                 (amplitude, freq, phase, start, start+duration)]
+    
+    
+    #driving!! utilized in double-tone spectroscopy
+    def Hdr(self, amplitude, duration, start, phase = 0):
+        
+        return [amplitude*self.n(1/2)/self.n(1/2).matrix_element(self.g_state(1/2), self.e_state(1/2)), 
+                "cos(wd%d*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4"%\
+                #(amplitude, freq, phase, start, start+duration)]
+                (self.index, phase, start, start+duration)]
 
     def sz(self):
         return ket2dm(basis(3, 0))-ket2dm(basis(3,1))
