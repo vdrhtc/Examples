@@ -49,7 +49,8 @@ class VacuumRabiSimulation:
         plt.plot(self._Ts, np.abs(projections2))
         
     def visualize_joint_readout(self, f, chi1, chi2):
-        data = array([expect(state, self._r.measurement_operator(f, chi1, chi2)) for state in self._result.states])
-        fig, axes = subplots(2, 1)
+        data = array([expect(state, self._r.measurement_operator(f, chi1, chi2)) \
+                      for state in self._result.states])
+        fig, axes = subplots(1, 2)
         axes[0].plot(self._Ts, data.real)
         axes[1].plot(self._Ts, data.imag, "C1")
