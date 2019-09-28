@@ -117,10 +117,10 @@ class DoubleTransmonSystem:
 
     def Hdr_cont(self, amplitudes):
         Hdr1 = self._tr1.Hdr_cont(amplitudes[0])
-        Hdr1[0] = self.two_qubit_operator(qubit1_operator=Hdr1[0])
+        Hdr1 = [self.two_qubit_operator(qubit1_operator=Hdr1[0]), Hdr1[1]]
 
         Hdr2 = self._tr2.Hdr_cont(amplitudes[1])
-        Hdr2[0] = self.two_qubit_operator(qubit2_operator=Hdr2[0])
+        Hdr2 = [self.two_qubit_operator(qubit2_operator=Hdr2[0]), Hdr2[1]]
 
         return [Hdr1] + [Hdr2]
 
