@@ -54,7 +54,7 @@ class ATSplittingSimulation:
             return steadystate(self.H_RF_RWA(), self.dts.c_ops(self.phi1, self.phi2))
         else:
             time_of_propagation = 1 / delta_f2
-            print("Propagation time:", time_of_propagation, "ns")
+            # print("Propagation time:", time_of_propagation, "ns")
 
             U = propagator(self.H(),
                            time_of_propagation,
