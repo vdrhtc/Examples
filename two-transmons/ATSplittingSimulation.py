@@ -14,7 +14,7 @@ class ATSplittingSimulation:
         self.s2 = s2
         self.period1 = period1
         self.period2 = period2
-        self.options = Options(rhs_reuse=True, nsteps=1e4)
+        self.options = Options(rhs_reuse=True, nsteps=1e5)
 
     def set_amplitudes(self, amp1, amp2):
         self.amp1 = amp1
