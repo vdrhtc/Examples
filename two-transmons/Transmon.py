@@ -15,7 +15,7 @@ class Transmon:
         self._gamma_phi = gamma_phi
         self.index = index
 
-        self._N_trunc = 3
+        self._N_trunc = 5
 
         self._n_cache = {}
         self._c_ops_cache = {}

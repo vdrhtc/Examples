@@ -183,6 +183,9 @@ class DoubleTransmonSystem:
         fixed_flux_spectra = array(fixed_flux_spectra)
         eigenlevels = fixed_flux_spectra.T
         transitions_from_g = eigenlevels - eigenlevels[0]
+        
+        self._single_photon_transitions = transitions_from_g[1:3].T / 2 / pi
+        self._two_photon_transitions = transitions_from_g[3:6].T / 2 / pi / 2
 
         if currents is not None:
             plot(currents, transitions_from_g[1:3].T / 2 / pi)

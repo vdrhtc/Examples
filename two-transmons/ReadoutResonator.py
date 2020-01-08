@@ -5,7 +5,7 @@ from matplotlib.pyplot import *
 
 class ReadoutResonator:
 
-    def __init__(self, f_res, Ql, Qc, line_att=0.0345, phi=0.5, noise_sigma=1e-4, delay=0.):
+    def __init__(self, f_res, Ql, Qc, line_att=0.0345, phi=0.5, noise_sigma=1e-4, delay=0., alpha = 0):
         self._f_res = f_res
         self._Ql = Ql
         self._Qc = Qc
@@ -13,6 +13,7 @@ class ReadoutResonator:
         self._phi = phi
         self._noise_sigma = noise_sigma
         self._delay = delay
+        self._alpha = alpha
 
     def set_qubit_parameters(self, g1, g2, f1, f2, alpha_1, alpha_2):
         self._g1 = g1
@@ -34,7 +35,7 @@ class ReadoutResonator:
         noise = 1 * random.normal(size=size, scale=self._noise_sigma / 2) + \
                 1j * random.normal(size=size, scale=self._noise_sigma / 2)
 
-        env_term = self._line_att * np.exp(-2 * np.pi * 1j * self._delay)
+        env_term = self._line_att * np.exp(-2 * np.pi * 1j * self._delay * f+1j*self._alpha)
         own_term = exp(1j * self._phi) * (self._Ql / self._Qc) / (
                 1 + 2 * 1j * self._Ql * ((f / (self._f_res - fr_shift)) - 1))
         result = env_term * (1 - own_term) + noise
@@ -73,10 +74,11 @@ class ReadoutResonator:
     def plot_all(self, fs):
         if fs is None:
             fs = linspace(self._f_res - 10e-3, self._f_res + 10e-3, 201)
-        fig, axes = subplots(nrows=1, ncols=2, figsize=(15, 5))
+        fig, axes = subplots(nrows=2, ncols=2, figsize=(15, 5))
+        axes = axes.ravel()
         shifts = self.get_dipsersive_shifts()
 
-        for idx, digest in enumerate([real, imag]):
+        for idx, digest in enumerate([abs, angle, real, imag]):
             for i, row in enumerate(shifts):
                 for j, shift in enumerate(row):
                     axes[idx].plot(fs, digest(self.S_param(fs, shift)), label="%d%d" % (i, j))
