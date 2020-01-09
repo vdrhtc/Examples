@@ -5,7 +5,8 @@ from numpy import *
 
 class Transmon:
 
-    def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi, Nc, index):
+    def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi,
+                 Nc, N_trunc, index):
         self._Ec = Ec
         self._Ej = Ej
         self._d = d
@@ -15,7 +16,7 @@ class Transmon:
         self._gamma_phi = gamma_phi
         self.index = index
 
-        self._N_trunc = 5
+        self._N_trunc = N_trunc
 
         self._n_cache = {}
         self._c_ops_cache = {}
@@ -48,7 +49,8 @@ class Transmon:
         except KeyError:
             H_charge_basis = self.Hc() + self.Hj(phi)
             evals, evecs = H_charge_basis.eigenstates()
-            self._H_diag_trunc_cache[phi] = self._truncate(H_charge_basis.transform(evecs))
+            H = self._truncate(H_charge_basis.transform(evecs))
+            self._H_diag_trunc_cache[phi] = H - H[0,0]
             return self._H_diag_trunc_cache[phi]
 
     def H_diag_trunc_approx(self, phi):
@@ -89,11 +91,13 @@ class Transmon:
             self._n_cache[phi] = self._truncate(Qobj(abs(charge(self._Nc).transform(evecs))))
             return self._n_cache[phi]
 
+    def raising(self, phi):
+        evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
+        return sum([abs(self.n(phi).matrix_element(evecs[j+1], evecs[j])) /
+                    abs(self.n(phi).matrix_element(evecs[0], evecs[1])) *
+                    evecs[j+1] * evecs[j].dag() for j in range(0, self._N_trunc - 1)])
+
     def lowering(self, phi):
-        #         evals, evecs = self.H(phi).eigenstates()
-        #         return sum([self.n().matrix_element(evecs[j], evecs[j+1]) /
-        #                     self.n().matrix_element(evecs[0], evecs[1]) *
-        #                     evecs[j]*evecs[j+1].dag() for j in range(0, self._Ns-1)])
         evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
         return sum([abs(self.n(phi).matrix_element(evecs[j], evecs[j + 1])) /
                     abs(self.n(phi).matrix_element(evecs[0], evecs[1])) *
