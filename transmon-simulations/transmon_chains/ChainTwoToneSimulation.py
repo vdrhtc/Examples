@@ -5,14 +5,10 @@ from tqdm import tqdm
 
 import matplotlib
 from matplotlib import ticker, colorbar as clb
-matplotlib.use('Qt5Agg')
+# matplotlib.use('Qt5Agg')
 from matplotlib.pyplot import *
 from numpy import *
 from qutip import *
-
-import os
-
-os.environ["OMP_NUM_THREADS"]="1"
 
 class ChainTwoToneSimulation:
 
