@@ -12,20 +12,22 @@ from numpy import *
 
 chain = TransmonChain(length = 5,
                       transmon_truncation=3,
-                      transmon_diagonalization_dimension=15)
+                      transmon_diagonalization_dimension=15,
+                      )
 
-chain.set_Ec(0.22*2*pi)
+chain.set_Ec(0.25*2*pi)
 chain.set_Ej(20*2*pi)
 chain.set_asymmetry(0.7)
-chain.set_J(.01*2*pi)
+chain.set_J(.05*2*pi)
 chain.set_phi(0)
 chain.set_gamma_phi(1e-4)
 chain.set_gamma_rel(1e-4)
 
 chain.build_transmons()
+chain.build_low_energy_kets(4)
 
 H_chain = chain.build_H_full()
-H_chain = chain.truncate_to_low_population_subspace(H_chain, 3)
+H_chain = chain.truncate_to_low_population_subspace(H_chain)
 
 evals, evecs = H_chain.eigenstates()
 
