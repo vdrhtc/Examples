@@ -1,4 +1,4 @@
-from Transmon import *
+from single_transmon.Transmon import *
 from qutip import *
 from itertools import product
 

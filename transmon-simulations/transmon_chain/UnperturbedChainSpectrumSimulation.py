@@ -1,6 +1,6 @@
 from itertools import chain
 
-from transmon_chains.TransmonChain import TransmonChain
+from transmon_chain.TransmonChain import TransmonChain
 from tqdm import tqdm
 
 import matplotlib
