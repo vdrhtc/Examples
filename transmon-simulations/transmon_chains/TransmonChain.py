@@ -1,6 +1,7 @@
 from Transmon import *
 from qutip import *
 from itertools import product
+from numpy import zeros
 
 class TransmonChain:
 
@@ -41,10 +42,19 @@ class TransmonChain:
         self._low_energy_states = []
         self._low_energy_state_indices = []
         transmon_states = [list(range(self._transmon_truncation)) for i in range(self._length)]
-        for idx, state_combination in enumerate(product(*transmon_states)):
+        transmon_states = product(*transmon_states)
+        
+        idx = 0
+        for idx, state_combination in enumerate(transmon_states):
             if sum(state_combination) <= total_population:
                 self._low_energy_states.append(state_combination)
                 self._low_energy_state_indices.append(idx)
+           
+        self._low_energy_states_mask = zeros([idx+1]*2, dtype=bool)
+        for idx1 in self._low_energy_state_indices:
+            for idx2 in self._low_energy_state_indices:
+                self._low_energy_states_mask[idx1, idx2] = True
+        
         print("Total %d kets included" % len(self._low_energy_states))
 
     def build_H_RWA(self):
@@ -75,13 +85,7 @@ class TransmonChain:
         return self._c_ops
 
     def truncate_to_low_population_subspace(self, operator):
-        new_oper = []
-        for idx1 in self._low_energy_state_indices:
-            new_oper_row = []
-            for idx2 in self._low_energy_state_indices:
-                new_oper_row.append(operator[idx1, idx2])
-            new_oper.append(new_oper_row)
-        return Qobj(new_oper)
+        return Qobj(operator.data[self._low_energy_states_mask].reshape((len(self._low_energy_state_indices), -1)))
 
     def build_RWA_driving(self):
         try:

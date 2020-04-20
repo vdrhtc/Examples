@@ -1,6 +1,6 @@
 import numpy as np
 from qutip import *
-from numpy import *
+from numpy import pi, sqrt
 
 
 class Transmon:
@@ -128,7 +128,7 @@ class Transmon:
         if freq is None:
             freq = self.ge_freq_approx(1 / 2)
         return [
-            self.n(1 / 2) / self.n(1 / 2).matrix_element(self.g_state(), self.e_state()),
+            self.n(0) / self.n(0).matrix_element(self.g_state(), self.e_state()),
             "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4" % \
             (amplitude, freq, phase, start, start + duration)]
 
@@ -138,7 +138,7 @@ class Transmon:
             return self._Hdr_cont_cache[amplitude]
         except KeyError:
             self._Hdr_cont_cache[amplitude] = [
-                amplitude * self.n(1 / 2) / self.n(1 / 2).matrix_element(self.g_state(),
+                amplitude * self.n(0) / self.n(0).matrix_element(self.g_state(),
                                                                          self.e_state()),
                 "cos(wd%d*t)" % self.index]
             return self._Hdr_cont_cache[amplitude]
@@ -147,8 +147,8 @@ class Transmon:
         try:
             return self._Hdr_RF_RWA_cache[amplitude]
         except KeyError:
-            self._Hdr_RF_RWA_cache[amplitude] = amplitude / 2 * self.n(1 / 2) / self.n(
-                1 / 2).matrix_element(self.g_state(),
+            self._Hdr_RF_RWA_cache[amplitude] = amplitude / 2 * self.n(0) / self.n(
+                0).matrix_element(self.g_state(),
                                       self.e_state())
             return self._Hdr_RF_RWA_cache[amplitude]
 
