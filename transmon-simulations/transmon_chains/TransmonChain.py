@@ -1,7 +1,7 @@
 from Transmon import *
 from qutip import *
 from itertools import product
-from numpy import zeros
+from numpy import zeros, array, where
 
 class TransmonChain:
 
@@ -38,7 +38,7 @@ class TransmonChain:
         self._transmon_H_cache = [{} for _ in range(self._length)]
         self._interaction_cache = {}
 
-    def build_low_energy_kets(self, total_population):
+    def build_low_energy_kets(self, total_population, max_simultaneously_above_first_excited):
         self._low_energy_states = []
         self._low_energy_state_indices = []
         transmon_states = [list(range(self._transmon_truncation)) for i in range(self._length)]
@@ -46,9 +46,11 @@ class TransmonChain:
         
         idx = 0
         for idx, state_combination in enumerate(transmon_states):
+            state_combination = array(state_combination)
             if sum(state_combination) <= total_population:
-                self._low_energy_states.append(state_combination)
-                self._low_energy_state_indices.append(idx)
+                if len(where(state_combination >= 2)[0]) <= max_simultaneously_above_first_excited:
+                    self._low_energy_states.append(state_combination)
+                    self._low_energy_state_indices.append(idx)
            
         self._low_energy_states_mask = zeros([idx+1]*2, dtype=bool)
         for idx1 in self._low_energy_state_indices:
@@ -94,7 +96,8 @@ class TransmonChain:
             driving_operator = self._zero_op.copy()
             for i in range(0, self._length):
                 chain_operator = self._identity_array.copy()
-                chain_operator[i] = self._transmons[i].Hdr_cont_RF_RWA(self._Omega[i])
+                chain_operator[i] = (create(self._transmon_truncation)+\
+                                     destroy(self._transmon_truncation))*self._Omega[i]/2 #self._transmons[i].Hdr_cont_RF_RWA(self._Omega[i])
                 driving_operator += tensor(*chain_operator)
             self._RWA_driving_cache[tuple(self._Omega)] = driving_operator
             return driving_operator
@@ -129,12 +132,12 @@ class TransmonChain:
             return self._interaction_cache[(i, j)][(self._phi[i], self._phi[j])]
         except:
             chain_operator1 = self._identity_array.copy()
-            chain_operator1[i] = self._transmons[i].raising(self._phi[i])
-            chain_operator1[j] = self._transmons[j].lowering(self._phi[j])
+            chain_operator1[i] = create(self._transmon_truncation) # self._transmons[i].raising(self._phi[i])
+            chain_operator1[j] = destroy(self._transmon_truncation) # self._transmons[j].lowering(self._phi[j])
 
             chain_operator2 = self._identity_array.copy()
-            chain_operator2[i] = self._transmons[i].lowering(self._phi[i])
-            chain_operator2[j] = self._transmons[j].raising(self._phi[j])
+            chain_operator2[i] = destroy(self._transmon_truncation) # self._transmons[i].lowering(self._phi[i])
+            chain_operator2[j] = create(self._transmon_truncation) # self._transmons[j].raising(self._phi[j])
 
             if (i,j) not in self._interaction_cache:
                 self._interaction_cache[(i,j)] = {}

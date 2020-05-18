@@ -2,7 +2,7 @@ from scipy import *
 from qutip import *
 from matplotlib.pyplot import *
 
-from ZPulse import *
+from two_transmons.ZPulse import *
 
 class VacuumRabiSimulation:
     
@@ -12,8 +12,8 @@ class VacuumRabiSimulation:
         self._params = params
         self._r = readout_resonator
         
-#         self._rho0 = dts.e_state(1/2, 1/2, 1)
-        self._rho0 = 1/2*(dts.gg_state(1/2, 1/2)+dts.e_state(1/2, 1/2, 1)+dts.e_state(1/2, 1/2, 2)+dts.ee_state(1/2, 1/2))
+        self._rho0 = dts.e_state(1/2, 1/2, 1)
+#         self._rho0 = 1/2*(dts.gg_state(1/2, 1/2)+dts.e_state(1/2, 1/2, 1)+dts.e_state(1/2, 1/2, 2)+dts.ee_state(1/2, 1/2))
         self._rho0 = self._rho0*self._rho0.dag()
 #         self._rho0 = tensor(dts._tr1.e_state(params["phi_base_level"]), dts._tr2.g_state(1/2))
    
@@ -48,9 +48,9 @@ class VacuumRabiSimulation:
         plt.plot(self._Ts, np.abs(projections1))
         plt.plot(self._Ts, np.abs(projections2))
         
-    def visualize_joint_readout(self, f, chi1, chi2):
-        data = array([expect(state, self._r.measurement_operator(f, chi1, chi2)) \
+    def visualize_joint_readout(self, f):
+        data = array([expect(state, self._r.measurement_operator(f, self._r.get_dipsersive_shifts())) \
                       for state in self._result.states])
-        fig, axes = subplots(1, 2)
+        fig, axes = subplots(1, 2, figsize=(15,5))
         axes[0].plot(self._Ts, data.real)
         axes[1].plot(self._Ts, data.imag, "C1")

@@ -16,7 +16,7 @@ class TransmonControl:
                    tr.Hdr(0.01*2*pi, 25, 0), 
                    tr.Hdr(0.01*2*pi, 25, 30, phase=0)]
         
-        self._rho0 = ket2dm(tr.g_state(1/2))
+        self._rho0 = ket2dm(tr.g_state())
         
         self._Ts = linspace(0, 80, 100)
         
@@ -36,11 +36,11 @@ class TransmonControl:
     def visualize_dynamics(self):
         Us = [(-1j*t*self._tr.H_diag_trunc_approx(1/2)).expm() for t in self._Ts]
         
-        plot(self._Ts, [expect(U.dag()*state*U, ket2dm(self._tr.e_state(1/2))) \
+        plot(self._Ts, [expect(U.dag()*state*U, ket2dm(self._tr.e_state())) \
                         for U, state in zip(Us, self._result.states)])
-        plot(self._Ts, [expect(U.dag()*state*U, 1/2*ket2dm(self._tr.e_state(1/2)+self._tr.g_state(1/2))) \
+        plot(self._Ts, [expect(U.dag()*state*U, 1/2*ket2dm(self._tr.e_state()+self._tr.g_state())) \
                         for U, state in zip(Us, self._result.states)])
-        plot(self._Ts, [expect(U.dag()*state*U, 1/2*ket2dm(self._tr.e_state(1/2)+1j*self._tr.g_state(1/2))) \
+        plot(self._Ts, [expect(U.dag()*state*U, 1/2*ket2dm(self._tr.e_state()+1j*self._tr.g_state())) \
                         for U, state in zip(Us, self._result.states)])
         
         grid()

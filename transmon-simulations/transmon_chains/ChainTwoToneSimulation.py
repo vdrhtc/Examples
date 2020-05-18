@@ -10,13 +10,19 @@ from matplotlib.pyplot import *
 from numpy import *
 from qutip import *
 
+from itertools import product 
+
+
 class ChainTwoToneSimulation:
 
-    def __init__(self, chain: TransmonChain, sweet_spots, periods, chain_hilbert_space_truncation):
+    def __init__(self, chain: TransmonChain, sweet_spots, periods, chain_hilbert_space_truncation, 
+                 max_simultaneously_above_first_excited, steady_kwargs = None):
         self._chain = chain
         self._sweet_spots = sweet_spots
         self._periods = periods
         self._truncation = chain_hilbert_space_truncation
+        self._max_simultaneously_above_first_excited = max_simultaneously_above_first_excited
+        self._steady_kwargs = steady_kwargs if steady_kwargs is not None else {}
         self._phis = []
         self._Omegas = []
         self._freqs = []
@@ -65,37 +71,42 @@ class ChainTwoToneSimulation:
         self._chain.build_RWA_driving()
 
         print(".OK")
-        self._chain.build_low_energy_kets(self._truncation)
+        self._chain.build_low_energy_kets(self._truncation, self._max_simultaneously_above_first_excited)
 
+        self._c_ops = self._chain.build_c_ops().copy()
+        for i in range(len(self._c_ops)):
+            self._c_ops[i] = self._chain.truncate_to_low_population_subspace(self._c_ops[i])
+            
         
-    def _column_calc(self, j):
-        column = []
-        self.setter(self._params[j])
+    def _iteration(self, param_ids):
+        param_idx, freq_idx = param_ids
+        self.setter(self._params[param_idx])
         error_coords = []
-        c_ops = self._chain.build_c_ops().copy()
-        for i in range(len(c_ops)):
-            c_ops[i] = self._chain.truncate_to_low_population_subspace(c_ops[i])
-
-        for freq_idx, freq in enumerate(self._freqs):
-            self._chain.set_omega(2*pi*freq)
-            H = self._chain.build_H_RWA() + self._chain.build_RWA_driving()
-            H = self._chain.truncate_to_low_population_subspace(H)
-            try:
-                column.append(steadystate(H, c_ops))
-            except Exception as e:
-                print(f"Solver error at x: {j}, y: {freq_idx}, {freq:.2f}: {e}")
-                error_coords.append((j, freq_idx))
-                column.append(steadystate(H, c_ops, use_rcm=True))
-        return column, error_coords
+     
+        freq = self._freqs[freq_idx]
+        self._chain.set_omega(2*pi*freq)
+        H = self._chain.build_H_RWA() + self._chain.build_RWA_driving()
+        H = self._chain.truncate_to_low_population_subspace(H)
+        try:
+            ans = steadystate(H, self._c_ops, **self._steady_kwargs)
+        except Exception as e:
+            print(f"Solver error at x: {param_idx}, y: {freq_idx}, {freq:.2f}: {e}")
+            error_coords.append((param_idx, freq_idx))
+            kwargs = self._steady_kwargs.copy()
+            kwargs["use_rcm"]=True
+            ans = steadystate(H, self._c_ops, **kwargs)
+        
+        return ans, error_coords
     
-    
-
+   
     def run(self, n_cpus):
-
+        param_combinations = list(product(range(len(self._params)), 
+                                          range(len(self._freqs))))
+            
         with Pool(n_cpus) as p:
             results = list(
-                tqdm_notebook(p.imap(self._column_calc, range(len(self._params))),
-                              total=len(self._params),
+                tqdm_notebook(p.imap(self._iteration, param_combinations),
+                              total=len(param_combinations),
                               smoothing=0))
             self._solver_error_coords = sum([result[1] for result in results])
-            self.spec = [result[0] for result in results]
+            self.spec = reshape(array([result[0] for result in results], dtype=object), (len(self._params), len(self._freqs)))
