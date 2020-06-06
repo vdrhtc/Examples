@@ -1,4 +1,4 @@
-from numpy import linspace, pi
+from numpy import linspace, pi, ones_like
 from qutip import *
 from ReadoutResonator import *
 from tqdm import tnrange, tqdm_notebook
@@ -50,7 +50,7 @@ class TwoToneSimulation:
             if len(amp2) > 1:
                 self.amp2s = amp2
             else:
-                self.amp2s = amp1[0]*ones_like(self.currs)
+                self.amp2s = amp2[0]*ones_like(self.currs)
         except:
             self.amp2s = amp2*ones_like(self.currs)
 
@@ -144,7 +144,7 @@ class TwoToneSimulation:
         pickle_data = {'data': self.spec, 'dts': self.dts, 'amps': [self.amp1, self.amp2],
                        'class': self}
         pickle_out = open("double_tone.pickle", "wb")
-        pickle.dump(pickle_data, pickle_out)
+#         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
         return self.spec
 
