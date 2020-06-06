@@ -3,7 +3,7 @@ import setuptools
 setuptools.setup(
     name="transmon_simulations",
     py_modules=["single_transmon", "transmon_chain", "two_transmons"],
-    version="0.1.1",
+    version="0.1.2",
     author="Gleb Fedorov",
     author_email="vdrhtc@gmail.com",
     description="Transmon simulations module",

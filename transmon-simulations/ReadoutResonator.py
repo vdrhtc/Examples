@@ -1,5 +1,6 @@
-from scipy import *
-from qutip import *
+import numpy as np
+from numpy import random, linspace, real, imag, abs, angle, exp
+from qutip import ket2dm, tensor, basis
 from matplotlib.pyplot import *
 
 
@@ -66,9 +67,9 @@ class ReadoutResonator:
 
     def measurement_operator(self, f, shifts):
         N = len(shifts)
-        return sum(
-            [[ket2dm(tensor(basis(N, i), basis(N, j))) * self.S_param(f, shift) for j, shift in
-             enumerate(row)] for
+        return sum([sum(
+            [ket2dm(tensor(basis(N, i), basis(N, j))) * self.S_param(f, shift) for j, shift in
+             enumerate(row)]) for
              i, row in enumerate(shifts)])
 
     def plot_all(self, fs):

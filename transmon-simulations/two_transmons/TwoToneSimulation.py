@@ -1,4 +1,4 @@
-from numpy import linspace, pi
+from numpy import linspace, pi, ones_like
 from qutip import *
 from ReadoutResonator import *
 from tqdm import tnrange, tqdm_notebook
@@ -38,32 +38,43 @@ class TwoToneSimulation:
         self.phi2s = (self.currs - self.s2) / self.period2
 
     def set_amps(self, amp1, amp2):
-        self.amp1 = amp1
-        self.amp2 = amp2
+        try:
+            if len(amp1) > 1:
+                self.amp1s = amp1
+            else:
+                self.amp1s = amp1[0]*ones_like(self.currs)
+        except:
+            self.amp1 = amp1*ones_like(self.currs)
+        
+        try:
+            if len(amp2) > 1:
+                self.amp2s = amp2
+            else:
+                self.amp2s = amp2[0]*ones_like(self.currs)
+        except:
+            self.amp2s = amp2*ones_like(self.currs)
 
     def generate_caches(self):
         self.dts.clear_caches()
 
         print("Generating caches", end="")
         for freq in self.freqs:
+            self.amp1 = self.amp1s[0]
+            self.amp2 = self.amp2s[0]
             self.phi1 = self.phi1s[0]
             self.phi2 = self.phi2s[0]
             self.freq = freq
             self.H()
         print(".", end="")
 
-        for phi1 in self.phi1s:
-            self.phi1 = phi1
-            self.phi2 = self.phi2s[0]
+        for j in range(len(self.currs)):
+            self.amp1 = self.amp1s[j]
+            self.amp2 = self.amp2s[j]
+            self.phi1 = self.phi1s[j]
+            self.phi2 = self.phi2s[j]
             self.freq = self.freqs[0]
             self.H()
-        print(".", end="")
 
-        for phi2 in self.phi2s:
-            self.phi1 = self.phi1s[0]
-            self.phi2 = phi2
-            self.freq = self.freqs[0]
-            self.H()
         print(".", end="\nOK")
 
     def generate_H(self):
@@ -90,7 +101,10 @@ class TwoToneSimulation:
         return propagator_steadystate(U)
 
     def steady_RWA(self):
-        return steadystate(self.H(), c_op_list=self.dts.c_ops(self.phi1, self.phi2))
+        try:
+            return steadystate(self.H(), c_op_list=self.dts.c_ops(self.phi1, self.phi2))
+        except:
+            return steadystate(self.H(), c_op_list=self.dts.c_ops(self.phi1, self.phi2), use_rcm=True)
 
     def steady(self):
         return
@@ -100,6 +114,8 @@ class TwoToneSimulation:
         column = []
         self.phi1 = self.phi1s[j]
         self.phi2 = self.phi2s[j]
+        self.amp1 = self.amp1s[j]
+        self.amp2 = self.amp2s[j]
 
         for freq in self.freqs:  # range (0, self.Lf, self.Lf//self.res_f):
             self.freq = freq
@@ -128,7 +144,7 @@ class TwoToneSimulation:
         pickle_data = {'data': self.spec, 'dts': self.dts, 'amps': [self.amp1, self.amp2],
                        'class': self}
         pickle_out = open("double_tone.pickle", "wb")
-        pickle.dump(pickle_data, pickle_out)
+#         pickle.dump(pickle_data, pickle_out)
         pickle_out.close()
         return self.spec
 
