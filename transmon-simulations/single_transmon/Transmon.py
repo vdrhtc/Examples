@@ -2,10 +2,11 @@ import numpy as np
 from qutip import *
 from numpy import pi, sqrt, abs
 
+
 class Transmon:
 
     def __init__(self, Ec, Ej, d, gamma_rel, gamma_phi,
-                 Nc, N_trunc, index):
+                 Nc, N_trunc, index, nonlinear_osc=False):
         self._Ec = Ec
         self._Ej = Ej
         self._d = d
@@ -14,6 +15,14 @@ class Transmon:
         self._gamma_rel = gamma_rel
         self._gamma_phi = gamma_phi
         self.index = index
+        self._nonlinear_osc = nonlinear_osc
+
+        self._linear_osc_H_stub = (sqrt(8 * Ej * Ec) - Ec) * create(N_trunc) * destroy(N_trunc)
+        self._nonlinear_osc_H_stub = - Ec / 2 * create(N_trunc) * destroy(N_trunc) * \
+                                     (create(N_trunc) * destroy(N_trunc) - 1)
+        self._nonlinear_osc_raising = create(N_trunc)
+        self._nonlinear_osc_lowering = destroy(N_trunc)
+        self._nonlinear_osc_n = destroy(N_trunc) + create(N_trunc)
 
         self._N_trunc = N_trunc
 
@@ -43,14 +52,20 @@ class Transmon:
         return [- self._Ej / 2 * tunneling(self._Ns, 1), self._phi_coeff(phi_waveform)]
 
     def H_diag_trunc(self, phi):
+        if self._nonlinear_osc:
+            return self.H_nonlinear_osc(phi)
+
         try:
             return self._H_diag_trunc_cache[phi]
         except KeyError:
             H_charge_basis = self.Hc() + self.Hj(phi)
             evals, evecs = H_charge_basis.eigenstates()
             H = self._truncate(H_charge_basis.transform(evecs))
-            self._H_diag_trunc_cache[phi] = H - H[0,0]
+            self._H_diag_trunc_cache[phi] = H - H[0, 0]
             return self._H_diag_trunc_cache[phi]
+
+    def H_nonlinear_osc(self, phi):
+        return self._linear_osc_H_stub * self._phi_coeff(phi) + self._nonlinear_osc_H_stub
 
     def H_diag_trunc_approx(self, phi):
         H_charge_basis = self.Hc() + self.Hj(0)
@@ -82,6 +97,10 @@ class Transmon:
         return (evals[1] - evals[0]) / 2 / pi
 
     def n(self, phi):
+
+        if self._nonlinear_osc:
+            return self._nonlinear_osc_n
+
         try:
             return self._n_cache[phi]
         except:
@@ -91,31 +110,36 @@ class Transmon:
             return self._n_cache[phi]
 
     def raising(self, phi):
+        if self._nonlinear_osc:
+            return self._nonlinear_osc_raising
+
         evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
-        return sum([abs(self.n(phi).matrix_element(evecs[j+1], evecs[j])) /
+        return sum([abs(self.n(phi).matrix_element(evecs[j + 1], evecs[j])) /
                     abs(self.n(phi).matrix_element(evecs[0], evecs[1])) *
-                    evecs[j+1] * evecs[j].dag() for j in range(0, self._N_trunc - 1)])
+                    evecs[j + 1] * evecs[j].dag() for j in range(0, self._N_trunc - 1)])
 
     def lowering(self, phi):
+        if self._nonlinear_osc:
+            return self._nonlinear_osc_lowering
+
         evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
         return sum([abs(self.n(phi).matrix_element(evecs[j], evecs[j + 1])) /
                     abs(self.n(phi).matrix_element(evecs[0], evecs[1])) *
                     evecs[j] * evecs[j + 1].dag() for j in range(0, self._N_trunc - 1)])
 
     def rotating_dephasing(self, phi):
-        evecs = [basis(self._N_trunc, i) for i in range(self._N_trunc)]
-        return sum([2 * j * evecs[j] * evecs[j].dag() for j in range(0, self._N_trunc)])
+        return self.raising(phi) * self.lowering(phi)
 
     def c_ops(self, phi):
         try:
             return self._c_ops_cache[phi]
         except KeyError:
             self._c_ops_cache[phi] = [sqrt(self._gamma_rel) * self.lowering(phi),
-                                      sqrt(self._gamma_phi / 2) * self.rotating_dephasing(phi)]
+                                      sqrt(self._gamma_phi) * self.rotating_dephasing(phi)]
             return self._c_ops_cache[phi]
 
     def _phi_coeff(self, phi):
-        return abs(np.cos(phi * pi)) * (1 + (self._d * np.tan(phi * pi)) ** 2) ** 0.5
+        return (np.cos(phi * pi)**2 + (self._d * np.sin(phi * pi)) ** 2) ** 0.25
 
     def get_Ns(self):
         return self._N_trunc
@@ -124,31 +148,48 @@ class Transmon:
         return self.index
 
     def Hdr(self, amplitude, duration, start, phase=0, freq=None):
+
         if freq is None:
             freq = self.ge_freq_approx(1 / 2)
-        return [
-            self.n(0) / self.n(0).matrix_element(self.g_state(), self.e_state()),
-            "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4" % \
-            (amplitude, freq, phase, start, start + duration)]
+
+        if self._nonlinear_osc:
+            return [self._nonlinear_osc_n,
+                    "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4" % \
+                    (amplitude, freq, phase, start, start + duration)]
+
+        return [self.n(0) / self.n(0).matrix_element(self.g_state(), self.e_state()),
+                "%f*cos(2*pi*%.16f*t+%f)*(1+np.sign(t-%f))*(1+np.sign(-t+%f))/4" % \
+                (amplitude, freq, phase, start, start + duration)]
 
     # driving!! utilized in double-tone spectroscopy
     def Hdr_cont(self, amplitude):
+
+        if self._nonlinear_osc:
+            op = self._nonlinear_osc_n
+        else:
+            op = self.n(0) / self.n(0).matrix_element(self.g_state(),
+                                                      self.e_state())
+
         try:
             return self._Hdr_cont_cache[amplitude]
         except KeyError:
             self._Hdr_cont_cache[amplitude] = [
-                amplitude * self.n(0) / self.n(0).matrix_element(self.g_state(),
-                                                                         self.e_state()),
+                amplitude * op,
                 "cos(wd%d*t)" % self.index]
             return self._Hdr_cont_cache[amplitude]
 
     def Hdr_cont_RF_RWA(self, amplitude):
+
+        if self._nonlinear_osc:
+            op = self._nonlinear_osc_n
+        else:
+            op = self.n(0) / self.n(0).matrix_element(self.g_state(),
+                                                      self.e_state())
+
         try:
             return self._Hdr_RF_RWA_cache[amplitude]
         except KeyError:
-            self._Hdr_RF_RWA_cache[amplitude] = amplitude / 2 * self.n(0) / self.n(
-                0).matrix_element(self.g_state(),
-                                      self.e_state())
+            self._Hdr_RF_RWA_cache[amplitude] = amplitude / 2 * op
             return self._Hdr_RF_RWA_cache[amplitude]
 
     def sz(self):

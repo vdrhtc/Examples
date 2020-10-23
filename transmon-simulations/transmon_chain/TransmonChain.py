@@ -6,10 +6,12 @@ from numpy import zeros, array, where
 class TransmonChain:
 
     def __init__(self, length, transmon_truncation=2,
-                 transmon_diagonalization_dimension=15):
+                 transmon_diagonalization_dimension=15,
+                 bose_hubbard_approximation = False):
         self._length = length
         self._transmon_truncation = transmon_truncation
         self._transmon_diagonalization_dimension = transmon_diagonalization_dimension
+        self._bose_hubbard_approximation = bose_hubbard_approximation
         self._Ec = []
         self._Ej = []
         self._J = []
@@ -37,6 +39,7 @@ class TransmonChain:
         self._RWA_subtrahend_cache = {}
         self._transmon_H_cache = [{} for _ in range(self._length)]
         self._interaction_cache = {}
+        self._c_ops = None
 
     def build_low_energy_kets(self, total_population, max_simultaneously_above_first_excited):
         self._low_energy_states = []
@@ -132,12 +135,12 @@ class TransmonChain:
             return self._interaction_cache[(i, j)][(self._phi[i], self._phi[j])]
         except:
             chain_operator1 = self._identity_array.copy()
-            chain_operator1[i] = create(self._transmon_truncation) # self._transmons[i].raising(self._phi[i])
-            chain_operator1[j] = destroy(self._transmon_truncation) # self._transmons[j].lowering(self._phi[j])
+            chain_operator1[i] = self._transmons[i].raising(self._phi[i])
+            chain_operator1[j] = self._transmons[j].lowering(self._phi[j])
 
             chain_operator2 = self._identity_array.copy()
-            chain_operator2[i] = destroy(self._transmon_truncation) # self._transmons[i].lowering(self._phi[i])
-            chain_operator2[j] = create(self._transmon_truncation) # self._transmons[j].raising(self._phi[j])
+            chain_operator2[i] = self._transmons[i].lowering(self._phi[i])
+            chain_operator2[j] = self._transmons[j].raising(self._phi[j])
 
             if (i,j) not in self._interaction_cache:
                 self._interaction_cache[(i,j)] = {}
@@ -150,7 +153,8 @@ class TransmonChain:
             self._transmons[i] = Transmon(self._Ec[i], self._Ej[i], self._d[i],
                                           self._gamma_rel[i], self._gamma_phi[i],
                                           self._transmon_diagonalization_dimension,
-                                          self._transmon_truncation, i)
+                                          self._transmon_truncation, i,
+                                          self._bose_hubbard_approximation)
 
     def get_length(self):
         return self._length
